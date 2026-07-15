@@ -3,7 +3,7 @@
 // ==========================================================
 const CONFIG = {
   // Google Cloud Console > Identifiants > OAuth client ID (type "Desktop app")
-  GOOGLE_CLIENT_ID: "313624287408-5d78ccrvuhr4cprt46lpbs5t2rcmk0ur.apps.googleusercontent.com",
+  GOOGLE_CLIENT_ID: "313624287408-js44h1bb18jp6h5kcd80lijeejnrtdpc.apps.googleusercontent.com",
 
   // Meta for Developers > ton app > Paramètres de base > ID de l'app
   FACEBOOK_APP_ID: "1688605009069713",
