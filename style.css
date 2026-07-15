@@ -1,0 +1,195 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap');
+
+:root{
+  --bg: #12151b;
+  --panel: #1b2027;
+  --panel-raised: #212831;
+  --border: #2a313c;
+  --text: #dbe1e8;
+  --text-dim: #7c8794;
+  --amber: #ffb454;
+  --amber-dim: #7a5a2c;
+  --green: #6bcf7f;
+  --red: #ff6b6b;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+  --sans: 'Inter', system-ui, sans-serif;
+}
+
+*{ box-sizing: border-box; }
+
+html, body{
+  margin:0; padding:0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+}
+
+.panel{
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 16px);
+}
+
+.panel-header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 20px 0 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.brand{
+  font-family: var(--mono);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-size: 16px;
+  color: var(--text);
+  display:flex; align-items:center; gap:8px;
+}
+.brand-dot{
+  width:8px; height:8px; border-radius:50%;
+  background: var(--amber);
+  box-shadow: 0 0 8px var(--amber);
+}
+.brand-sub{ color: var(--text-dim); font-weight:500; }
+
+.status-strip{ display:flex; gap:8px; }
+.led{
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  display:flex; align-items:center; gap:6px;
+  cursor: default;
+}
+.led-light{
+  width:7px; height:7px; border-radius:50%;
+  background: var(--red);
+  box-shadow: 0 0 6px var(--red);
+  transition: background .2s, box-shadow .2s;
+}
+.led.connected .led-light{
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+}
+.led.connected{ color: var(--text); }
+
+main{ flex:1; display:flex; flex-direction:column; gap:14px; padding-top:16px; }
+
+.card{
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.field-label{
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--amber);
+  letter-spacing: 0.03em;
+  display:block;
+  margin-bottom: 10px;
+}
+
+.dropzone{
+  display:flex; align-items:center; justify-content:center;
+  min-height: 160px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  background: var(--panel-raised);
+  color: var(--text-dim);
+  font-size: 14px;
+  text-align:center;
+  padding: 12px;
+  cursor: pointer;
+}
+.dropzone video{ max-width:100%; max-height: 260px; border-radius:6px; }
+
+select, textarea, input[type="text"]{
+  width:100%;
+  background: var(--panel-raised);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: var(--sans);
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+textarea{ resize: vertical; }
+
+.preset-actions{ display:flex; gap:8px; }
+.preset-actions input{ margin-bottom:0; }
+
+.targets{ display:flex; flex-direction:column; gap:10px; }
+.target-toggle{ display:flex; align-items:center; gap:10px; font-size:14px; }
+.target-toggle input{ width:18px; height:18px; accent-color: var(--amber); }
+
+.btn-publish{
+  font-family: var(--mono);
+  font-weight:700;
+  letter-spacing:0.04em;
+  font-size: 15px;
+  background: var(--amber);
+  color: #1a1206;
+  border:none;
+  border-radius: 10px;
+  padding: 16px;
+  cursor: pointer;
+}
+.btn-publish:disabled{
+  background: var(--panel-raised);
+  color: var(--text-dim);
+  cursor: not-allowed;
+}
+
+.btn-ghost{
+  font-family: var(--mono);
+  font-size: 12px;
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+.btn-ghost:active{ background: var(--panel-raised); }
+
+.connect-footer{
+  display:flex; gap:8px;
+  padding-top: 14px;
+}
+.connect-footer button{ flex:1; }
+
+.log-panel{
+  background: #0d0f13;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  min-height: 90px;
+}
+.log-title{
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+  letter-spacing: 0.03em;
+}
+.log-body{
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  max-height: 160px;
+  overflow-y: auto;
+}
+.log-body .ok{ color: var(--green); }
+.log-body .err{ color: var(--red); }
+.log-body .info{ color: var(--amber); }

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Repost — TikTok → YouTube / Instagram</title>
+<meta name="theme-color" content="#14171c">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="panel">
+  <header class="panel-header">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      REPOST<span class="brand-sub">.CTRL</span>
+    </div>
+    <div class="status-strip">
+      <button class="led" id="led-youtube" data-service="youtube" title="YouTube">
+        <span class="led-light"></span>YT
+      </button>
+      <button class="led" id="led-instagram" data-service="instagram" title="Instagram">
+        <span class="led-light"></span>IG
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <label class="field-label" for="file-input">01 — Vidéo</label>
+      <label class="dropzone" id="dropzone" for="file-input">
+        <span id="dropzone-text">Sélectionner la vidéo depuis la galerie</span>
+        <video id="preview" playsinline muted style="display:none"></video>
+      </label>
+      <input type="file" id="file-input" accept="video/*" hidden>
+    </section>
+
+    <section class="card">
+      <label class="field-label" for="preset-select">02 — Description</label>
+      <select id="preset-select">
+        <option value="">— Choisir un modèle —</option>
+      </select>
+      <textarea id="caption-text" rows="4" placeholder="Ta description partira ici, modifiable avant publication."></textarea>
+      <div class="preset-actions">
+        <input type="text" id="preset-name" placeholder="Nom du modèle">
+        <button class="btn-ghost" id="save-preset">Enregistrer ce modèle</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <label class="field-label">03 — Destinations</label>
+      <div class="targets">
+        <label class="target-toggle"><input type="checkbox" id="target-youtube" checked> YouTube Shorts</label>
+        <label class="target-toggle"><input type="checkbox" id="target-instagram" checked> Instagram Reels</label>
+      </div>
+    </section>
+
+    <button class="btn-publish" id="publish-btn" disabled>Publier</button>
+
+    <section class="log-panel" id="log-panel">
+      <div class="log-title">Journal</div>
+      <div class="log-body" id="log-body"></div>
+    </section>
+  </main>
+
+  <footer class="connect-footer">
+    <button class="btn-ghost" id="connect-youtube">Connecter YouTube</button>
+    <button class="btn-ghost" id="connect-instagram">Connecter Instagram</button>
+  </footer>
+</div>
+
+<script src="https://connect.facebook.net/fr_FR/sdk.js" async defer crossorigin="anonymous"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
