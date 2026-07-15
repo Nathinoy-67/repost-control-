@@ -82,8 +82,8 @@ els.targetYoutube.addEventListener('change', updatePublishButton);
 els.targetInstagram.addEventListener('change', updatePublishButton);
 
 // ==========================================================
-// GOOGLE / YOUTUBE — OAuth PKCE + échange de code via le Worker
-// (client type "Web application" : le secret reste sur Cloudflare)
+// GOOGLE / YOUTUBE — OAuth PKCE 100% côté navigateur
+// (client type "Desktop app" : pas de secret confidentiel requis)
 // ==========================================================
 const GOOGLE_REDIRECT_URI = location.origin + location.pathname;
 const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/youtube.upload';
@@ -201,21 +201,29 @@ async function uploadToYoutube(file, caption){
 }
 
 // ==========================================================
-// FACEBOOK / INSTAGRAM — login navigateur + publication via le Worker
+// FACEBOOK / INSTAGRAM — redirection OAuth directe (pas de popup/SDK,
+// plus fiable sur mobile/PWA) + publication via le Worker
 // ==========================================================
-window.fbAsyncInit = function(){
-  FB.init({ appId: CONFIG.FACEBOOK_APP_ID, xfbml: false, version: 'v21.0' });
-};
+const FB_SCOPE = 'instagram_business_basic,instagram_business_content_publish,pages_show_list,pages_read_engagement';
 
 function connectInstagram(){
-  FB.login((response) => {
-    if (response.authResponse){
-      const shortToken = response.authResponse.accessToken;
-      exchangeAndStoreFbToken(shortToken);
-    } else {
-      log('Connexion Instagram annulée.', 'err');
-    }
-  }, { scope: 'instagram_business_basic,instagram_business_content_publish,pages_show_list,pages_read_engagement' });
+  const params = new URLSearchParams({
+    client_id: CONFIG.FACEBOOK_APP_ID,
+    redirect_uri: GOOGLE_REDIRECT_URI,
+    response_type: 'token',
+    scope: FB_SCOPE,
+  });
+  location.href = `https://www.facebook.com/v21.0/dialog/oauth?${params}`;
+}
+
+async function handleFacebookRedirect(){
+  if (!location.hash) return;
+  const hashParams = new URLSearchParams(location.hash.substring(1));
+  const shortToken = hashParams.get('access_token');
+  if (!shortToken) return;
+  window.history.replaceState({}, '', GOOGLE_REDIRECT_URI);
+  log('Retour de Facebook, échange du token…');
+  await exchangeAndStoreFbToken(shortToken);
 }
 
 async function exchangeAndStoreFbToken(shortToken){
@@ -290,6 +298,7 @@ els.publishBtn.addEventListener('click', async () => {
 
 // ---------- Init ----------
 handleGoogleRedirect();
+handleFacebookRedirect();
 refreshConnectionUI();
 
 if ('serviceWorker' in navigator){
