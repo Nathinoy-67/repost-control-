@@ -6,7 +6,7 @@ const CONFIG = {
   GOOGLE_CLIENT_ID: "313624287408-js44h1bb18jp6h5kcd80lijeejnrtdpc.apps.googleusercontent.com",
 
   // Meta for Developers > ton app > Paramètres de base > ID de l'app
-  FACEBOOK_APP_ID: "1688605009069713",
+  FACEBOOK_CONFIG_ID: "2237919497004871",
 
   // URL de ton Worker Cloudflare (ex: https://repost-worker.tonpseudo.workers.dev)
   WORKER_URL: "https://repost-worker.nathanguillerme1.workers.dev",
