@@ -82,8 +82,8 @@ els.targetYoutube.addEventListener('change', updatePublishButton);
 els.targetInstagram.addEventListener('change', updatePublishButton);
 
 // ==========================================================
-// GOOGLE / YOUTUBE — OAuth PKCE 100% côté navigateur
-// (client type "Desktop app" : pas de secret confidentiel requis)
+// GOOGLE / YOUTUBE — OAuth PKCE + échange de code via le Worker
+// (client type "Web application" : le secret reste sur Cloudflare)
 // ==========================================================
 const GOOGLE_REDIRECT_URI = location.origin + location.pathname;
 const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/youtube.upload';
@@ -124,17 +124,10 @@ async function handleGoogleRedirect(){
   const code = url.searchParams.get('code');
   if (!code) return;
   const verifier = sessionStorage.getItem('gv');
-  const body = new URLSearchParams({
-    client_id: CONFIG.GOOGLE_CLIENT_ID,
-    code,
-    code_verifier: verifier,
-    grant_type: 'authorization_code',
-    redirect_uri: GOOGLE_REDIRECT_URI,
-  });
-  const res = await fetch('https://oauth2.googleapis.com/token', {
+  const res = await fetch(`${CONFIG.WORKER_URL}/exchange-google-code`, {
     method: 'POST',
-    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-    body,
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ code, verifier, redirectUri: GOOGLE_REDIRECT_URI }),
   });
   const data = await res.json();
   if (data.access_token){
@@ -154,15 +147,10 @@ async function getYoutubeAccessToken(){
   if (Date.now() < expiry - 60000) return localStorage.getItem('yt_access_token');
   const refresh = localStorage.getItem('yt_refresh_token');
   if (!refresh) return null;
-  const body = new URLSearchParams({
-    client_id: CONFIG.GOOGLE_CLIENT_ID,
-    refresh_token: refresh,
-    grant_type: 'refresh_token',
-  });
-  const res = await fetch('https://oauth2.googleapis.com/token', {
+  const res = await fetch(`${CONFIG.WORKER_URL}/refresh-google-token`, {
     method: 'POST',
-    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-    body,
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ refreshToken: refresh }),
   });
   const data = await res.json();
   if (data.access_token){
