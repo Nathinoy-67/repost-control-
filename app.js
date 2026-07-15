@@ -1,6 +1,8 @@
 // ==========================================================
 // REPOST.CTRL — logique de l'app
+// VERSION: 2026-07-15-d (Instagram connexion directe)
 // ==========================================================
+console.log('REPOST.CTRL version 2026-07-15-d');
 
 const els = {
   fileInput: document.getElementById('file-input'),
@@ -82,8 +84,7 @@ els.targetYoutube.addEventListener('change', updatePublishButton);
 els.targetInstagram.addEventListener('change', updatePublishButton);
 
 // ==========================================================
-// GOOGLE / YOUTUBE — OAuth PKCE 100% côté navigateur
-// (client type "Desktop app" : pas de secret confidentiel requis)
+// GOOGLE / YOUTUBE
 // ==========================================================
 const GOOGLE_REDIRECT_URI = location.origin + location.pathname;
 const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/youtube.upload';
@@ -115,14 +116,26 @@ async function connectYoutube(){
     code_challenge_method: 'S256',
     access_type: 'offline',
     prompt: 'consent',
+    state: 'google',
   });
   location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
 }
 
-async function handleGoogleRedirect(){
+async function handleOAuthRedirect(){
   const url = new URL(location.href);
   const code = url.searchParams.get('code');
+  const state = url.searchParams.get('state');
   if (!code) return;
+  if (state === 'google'){
+    await handleGoogleRedirect(code);
+  } else if (state === 'instagram'){
+    await handleInstagramRedirect(code);
+  }
+  window.history.replaceState({}, '', GOOGLE_REDIRECT_URI);
+  refreshConnectionUI();
+}
+
+async function handleGoogleRedirect(code){
   const verifier = sessionStorage.getItem('gv');
   const res = await fetch(`${CONFIG.WORKER_URL}/exchange-google-code`, {
     method: 'POST',
@@ -138,8 +151,6 @@ async function handleGoogleRedirect(){
   } else {
     log('Échec connexion YouTube : ' + JSON.stringify(data), 'err');
   }
-  window.history.replaceState({}, '', GOOGLE_REDIRECT_URI);
-  refreshConnectionUI();
 }
 
 async function getYoutubeAccessToken(){
@@ -201,52 +212,33 @@ async function uploadToYoutube(file, caption){
 }
 
 // ==========================================================
-// FACEBOOK / INSTAGRAM — redirection OAuth directe (pas de popup/SDK,
-// plus fiable sur mobile/PWA) + publication via le Worker
+// INSTAGRAM — connexion directe (sans Facebook, sans Page)
 // ==========================================================
-const FB_SCOPE = 'instagram_business_basic,instagram_business_content_publish,pages_show_list,pages_read_engagement';
+const INSTAGRAM_SCOPE = 'instagram_business_basic,instagram_business_content_publish';
 
 function connectInstagram(){
   const params = new URLSearchParams({
-    client_id: CONFIG.FACEBOOK_APP_ID,
+    client_id: CONFIG.INSTAGRAM_APP_ID,
     redirect_uri: GOOGLE_REDIRECT_URI,
-    response_type: 'token',
-    scope: FB_SCOPE,
+    response_type: 'code',
+    scope: INSTAGRAM_SCOPE,
+    state: 'instagram',
   });
-  location.href = `https://www.facebook.com/v21.0/dialog/oauth?${params}`;
+  location.href = `https://www.instagram.com/oauth/authorize?${params}`;
 }
 
-async function handleFacebookRedirect(){
-  if (!location.hash) return;
-  const hashParams = new URLSearchParams(location.hash.substring(1));
-  const shortToken = hashParams.get('access_token');
-  if (!shortToken) return;
-  window.history.replaceState({}, '', GOOGLE_REDIRECT_URI);
-  log('Retour de Facebook, échange du token…');
-  await exchangeAndStoreFbToken(shortToken);
-}
-
-async function exchangeAndStoreFbToken(shortToken){
-  log('Échange du token Instagram (via le worker)…');
-  const res = await fetch(`${CONFIG.WORKER_URL}/exchange-fb-token?token=${encodeURIComponent(shortToken)}`);
+async function handleInstagramRedirect(code){
+  log('Retour d\'Instagram, échange du code…');
+  const res = await fetch(`${CONFIG.WORKER_URL}/exchange-ig-code`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ code, redirectUri: GOOGLE_REDIRECT_URI }),
+  });
   const data = await res.json();
   if (!data.access_token) { log('Échec échange token IG : ' + JSON.stringify(data), 'err'); return; }
-  localStorage.setItem('fb_long_token', data.access_token);
-  await resolveInstagramAccount(data.access_token);
-}
-
-async function resolveInstagramAccount(token){
-  const pagesRes = await fetch(`https://graph.facebook.com/v21.0/me/accounts?access_token=${token}`);
-  const pages = await pagesRes.json();
-  const page = pages.data && pages.data[0];
-  if (!page) { log('Aucune Page Facebook trouvée sur ce compte.', 'err'); return; }
-  const igRes = await fetch(`https://graph.facebook.com/v21.0/${page.id}?fields=instagram_business_account&access_token=${token}`);
-  const igData = await igRes.json();
-  if (!igData.instagram_business_account) { log('Aucun compte Instagram Business lié à cette Page.', 'err'); return; }
-  localStorage.setItem('ig_user_id', igData.instagram_business_account.id);
-  localStorage.setItem('ig_page_token', page.access_token);
+  localStorage.setItem('ig_user_id', data.user_id);
+  localStorage.setItem('ig_page_token', data.access_token);
   log('Instagram connecté.', 'ok');
-  refreshConnectionUI();
 }
 
 async function publishToInstagram(file, caption){
@@ -297,8 +289,7 @@ els.publishBtn.addEventListener('click', async () => {
 });
 
 // ---------- Init ----------
-handleGoogleRedirect();
-handleFacebookRedirect();
+handleOAuthRedirect();
 refreshConnectionUI();
 
 if ('serviceWorker' in navigator){
