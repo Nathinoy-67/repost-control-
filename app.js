@@ -1,8 +1,8 @@
 // ==========================================================
 // REPOST.CTRL — logique de l'app
-// VERSION: 2026-07-15-d (Instagram connexion directe)
+// VERSION: 2026-07-15-e (redirect_uri fixe)
 // ==========================================================
-console.log('REPOST.CTRL version 2026-07-15-d');
+console.log('REPOST.CTRL version 2026-07-15-e');
 
 const els = {
   fileInput: document.getElementById('file-input'),
@@ -84,9 +84,11 @@ els.targetYoutube.addEventListener('change', updatePublishButton);
 els.targetInstagram.addEventListener('change', updatePublishButton);
 
 // ==========================================================
-// GOOGLE / YOUTUBE
+// GOOGLE / YOUTUBE — OAuth PKCE 100% côté navigateur
 // ==========================================================
-const GOOGLE_REDIRECT_URI = location.origin + location.pathname;
+// URL fixe (pas recalculée dynamiquement) pour garantir une correspondance
+// exacte avec ce qui est enregistré côté Google/Meta.
+const GOOGLE_REDIRECT_URI = 'https://nathinoy-67.github.io/repost-control-/';
 const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/youtube.upload';
 
 function base64url(buffer){
@@ -212,7 +214,8 @@ async function uploadToYoutube(file, caption){
 }
 
 // ==========================================================
-// INSTAGRAM — connexion directe (sans Facebook, sans Page)
+// INSTAGRAM — connexion directe (Instagram API with Instagram login)
+// pas de Facebook, pas de Page
 // ==========================================================
 const INSTAGRAM_SCOPE = 'instagram_business_basic,instagram_business_content_publish';
 
