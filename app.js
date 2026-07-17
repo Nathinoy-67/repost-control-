@@ -1,8 +1,8 @@
 // ==========================================================
 // REPOST.CTRL — logique de l'app
-// VERSION: 2026-07-15-f (fix redirect_uri fixe + tag #Shorts)
+// VERSION: 2026-07-15-g (fix sélection vidéo mobile + #Shorts)
 // ==========================================================
-console.log('REPOST.CTRL version 2026-07-15-f');
+console.log('REPOST.CTRL version 2026-07-15-g');
 
 const els = {
   fileInput: document.getElementById('file-input'),
@@ -68,16 +68,17 @@ els.savePreset.addEventListener('click', () => {
 loadPresets();
 
 // ---------- Vidéo ----------
-els.dropzone.addEventListener('click', () => els.fileInput.click());
+// Le <label for="file-input"> ouvre déjà le sélecteur nativement.
+// (un addEventListener('click') en plus provoquait un double-déclenchement
+// sur certains navigateurs mobiles, qui faisait perdre le fichier choisi)
 els.fileInput.addEventListener('change', () => {
   const file = els.fileInput.files[0];
   if (!file) return;
   selectedFile = file;
-  const url = URL.createObjectURL(file);
-  els.preview.src = url;
-  els.preview.style.display = 'block';
-  els.dropzoneText.style.display = 'none';
-  els.preview.play().catch(()=>{});
+  const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+  els.dropzoneText.textContent = `✅ ${file.name} (${sizeMb} Mo) sélectionnée`;
+  els.dropzoneText.style.display = 'block';
+  els.preview.style.display = 'none';
   updatePublishButton();
 });
 els.targetYoutube.addEventListener('change', updatePublishButton);
@@ -86,8 +87,6 @@ els.targetInstagram.addEventListener('change', updatePublishButton);
 // ==========================================================
 // GOOGLE / YOUTUBE — OAuth PKCE 100% côté navigateur
 // ==========================================================
-// URL fixe (pas recalculée dynamiquement) pour garantir une correspondance
-// exacte avec ce qui est enregistré côté Google/Meta.
 const GOOGLE_REDIRECT_URI = 'https://nathinoy-67.github.io/repost-control-/';
 const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/youtube.upload';
 
@@ -218,7 +217,6 @@ async function uploadToYoutube(file, caption){
 
 // ==========================================================
 // INSTAGRAM — connexion directe (Instagram API with Instagram login)
-// pas de Facebook, pas de Page
 // ==========================================================
 const INSTAGRAM_SCOPE = 'instagram_business_basic,instagram_business_content_publish';
 
