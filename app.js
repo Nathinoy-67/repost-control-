@@ -1,8 +1,8 @@
 // ==========================================================
 // REPOST.CTRL — logique de l'app
-// VERSION: 2026-07-15-g (fix sélection vidéo mobile + #Shorts)
+// VERSION: 2026-07-17-h (Instagram : vérifications courtes répétées)
 // ==========================================================
-console.log('REPOST.CTRL version 2026-07-15-g');
+console.log('REPOST.CTRL version 2026-07-17-h');
 
 const els = {
   fileInput: document.getElementById('file-input'),
@@ -68,9 +68,6 @@ els.savePreset.addEventListener('click', () => {
 loadPresets();
 
 // ---------- Vidéo ----------
-// Le <label for="file-input"> ouvre déjà le sélecteur nativement.
-// (un addEventListener('click') en plus provoquait un double-déclenchement
-// sur certains navigateurs mobiles, qui faisait perdre le fichier choisi)
 els.fileInput.addEventListener('change', () => {
   const file = els.fileInput.files[0];
   if (!file) return;
@@ -85,7 +82,7 @@ els.targetYoutube.addEventListener('change', updatePublishButton);
 els.targetInstagram.addEventListener('change', updatePublishButton);
 
 // ==========================================================
-// GOOGLE / YOUTUBE — OAuth PKCE 100% côté navigateur
+// GOOGLE / YOUTUBE
 // ==========================================================
 const GOOGLE_REDIRECT_URI = 'https://nathinoy-67.github.io/repost-control-/';
 const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/youtube.upload';
@@ -233,7 +230,7 @@ function connectInstagram(){
 
 async function handleInstagramRedirect(code){
   log('Retour d\'Instagram, échange du code…');
-  const res = await fetch(`https://nathinoy67--bfb1f8da81dc11f1b36d1607ee4eb77e.web.val.run`, {
+  const res = await fetch('https://nathinoy67--bfb1f8da81dc11f1b36d1607ee4eb77e.web.val.run', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({ code, redirectUri: GOOGLE_REDIRECT_URI }),
@@ -250,18 +247,36 @@ async function publishToInstagram(file, caption){
   const token = localStorage.getItem('ig_page_token');
   if (!igUserId || !token) throw new Error('Instagram non connecté.');
 
-  log('Envoi vers Instagram (via le worker)…');
+  log('Envoi de la vidéo vers Instagram…');
   const form = new FormData();
   form.append('video', file);
   form.append('caption', caption);
   form.append('igUserId', igUserId);
   form.append('accessToken', token);
 
-  const res = await fetch(`${CONFIG.WORKER_URL}/instagram-publish`, { method: 'POST', body: form });
-  const result = await res.json();
-  if (!res.ok || result.error) throw new Error('Instagram : ' + JSON.stringify(result));
-  log(`Instagram Reel publié : ${result.id}`, 'ok');
-  return result;
+  const createRes = await fetch(`${CONFIG.WORKER_URL}/instagram-create`, { method: 'POST', body: form });
+  const createResult = await createRes.json();
+  if (!createRes.ok || createResult.error) throw new Error('Instagram (envoi) : ' + JSON.stringify(createResult));
+
+  const containerId = createResult.containerId;
+  log('Vidéo envoyée, traitement par Instagram en cours…');
+
+  for (let i = 0; i < 40; i++){
+    await new Promise(r => setTimeout(r, 5000));
+    const checkRes = await fetch(`${CONFIG.WORKER_URL}/instagram-check-publish`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ containerId, igUserId, accessToken: token }),
+    });
+    const checkResult = await checkRes.json();
+    if (checkResult.done){
+      if (checkResult.error) throw new Error('Instagram (publication) : ' + JSON.stringify(checkResult.detail || checkResult.error));
+      log(`Instagram Reel publié : ${checkResult.id}`, 'ok');
+      return checkResult;
+    }
+    log(`Instagram : traitement en cours (${checkResult.status})…`);
+  }
+  throw new Error('Instagram : délai de traitement dépassé, réessaie plus tard.');
 }
 
 // ---------- Connexion UI ----------
