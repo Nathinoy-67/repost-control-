@@ -233,7 +233,7 @@ function connectInstagram(){
 
 async function handleInstagramRedirect(code){
   log('Retour d\'Instagram, échange du code…');
-  const res = await fetch(`${CONFIG.WORKER_URL}/exchange-ig-code`, {
+  const res = await fetch(`https://nathinoy67--bfb1f8da81dc11f1b36d1607ee4eb77e.web.val.run`, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({ code, redirectUri: GOOGLE_REDIRECT_URI }),
