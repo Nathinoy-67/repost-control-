@@ -1,8 +1,8 @@
 // ==========================================================
 // REPOST.CTRL — logique de l'app
-// VERSION: 2026-07-15-e (redirect_uri fixe)
+// VERSION: 2026-07-15-f (fix redirect_uri fixe + tag #Shorts)
 // ==========================================================
-console.log('REPOST.CTRL version 2026-07-15-e');
+console.log('REPOST.CTRL version 2026-07-15-f');
 
 const els = {
   fileInput: document.getElementById('file-input'),
@@ -179,8 +179,11 @@ async function uploadToYoutube(file, caption){
   if (!token) throw new Error('YouTube non connecté.');
 
   const title = caption.split('\n')[0].slice(0, 95) || 'Short';
+  const descriptionWithTag = caption.toLowerCase().includes('#shorts')
+    ? caption
+    : `${caption}\n\n#Shorts`;
   const metadata = {
-    snippet: { title, description: caption, categoryId: '22' },
+    snippet: { title, description: descriptionWithTag, categoryId: '22' },
     status: { privacyStatus: 'public', selfDeclaredMadeForKids: false },
   };
 
